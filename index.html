@@ -294,22 +294,28 @@
   .skin-opt:hover{ transform:translateY(-1px) scale(1.05); filter:brightness(1.2); }
   .skin-opt.active{ background:var(--opt-color, var(--c1)); color:#0a0a1a; }
   .skin-opt .count{ opacity:.75; font-weight:400; margin-left:4px; }
+  .skin-select-mobile{ display:none; }
   @media (max-width:480px){
     .celebration-card{ padding:32px 26px; min-width:0; }
     .celeb-year{ font-size:52px; }
     .celeb-title{ font-size:17px; }
-    .skin-selector{ width:92%; }
-    .skin-options{
-      display:flex; flex-wrap:wrap; justify-content:center; align-items:center;
-      gap:7px 6px; row-gap:7px;
+    .skin-selector{
+      width:auto; max-width:78%; top:auto; left:50%; bottom:8%; transform:translateX(-50%);
+      gap:5px;
     }
-    .skin-options .skin-opt{ font-size:9.5px; padding:5px 10px; text-align:center; }
-    .skin-options .skin-opt:first-child,
-    .skin-options .skin-opt:last-child{ flex:0 0 100%; order:0; }
-    .skin-options .skin-opt:last-child{ order:99; }
-    .skin-options .skin-opt:not(:first-child):not(:last-child){
-      flex:0 0 calc(50% - 10px); order:1;
+    .skin-label{ font-size:9.5px; }
+    .skin-options{ display:none; }
+    .skin-select-mobile{
+      display:block; appearance:none; -webkit-appearance:none;
+      font-family:inherit; font-size:11px; font-weight:700; color:#fff; text-align:center;
+      padding:7px 30px 7px 16px; border-radius:20px; cursor:pointer; max-width:100%;
+      background-color:rgba(10,10,26,.88); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+      border:2px solid var(--c1); box-shadow:0 0 10px color-mix(in srgb, var(--c1) 55%, transparent);
+      background-image:linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(135deg, #fff 50%, transparent 50%);
+      background-position:calc(100% - 17px) center, calc(100% - 12px) center;
+      background-size:5px 5px, 5px 5px; background-repeat:no-repeat;
     }
+    .skin-select-mobile option{ background:#14102b; color:#fff; }
   }
   .mystery .cover{
     position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
@@ -746,6 +752,7 @@
           <div class="skin-selector" id="skin-selector">
             <span class="skin-label">🎨 Versión del juego:</span>
             <div class="skin-options" id="skin-options"></div>
+            <select class="skin-select-mobile" id="skin-select-mobile" onchange="pickSkin(this.value || null)"></select>
           </div>
         </div>
       </div>
@@ -2363,14 +2370,28 @@ function getSongsForSkin(skinId){
 }
 function renderSkinSelector(){
   const el = document.getElementById('skin-options');
-  if(!el) return;
+  const sel = document.getElementById('skin-select-mobile');
   const skins = brandConfig.skins || [];
-  let html = `<span class="skin-opt${!selectedSkinId ? ' active' : ''}" style="--opt-color:${PALETTE[0]};" onclick="pickSkin(null)">🎵 Todas<span class="count">(${songBank.length})</span></span>`;
-  skins.forEach(sk=>{
-    const count = getSongsForSkin(sk.id).length;
-    html += `<span class="skin-opt${selectedSkinId===sk.id ? ' active' : ''}" style="--opt-color:${sk.color};" onclick="pickSkin('${sk.id}')">${escapeHtml(sk.name)}<span class="count">(${count})</span></span>`;
-  });
-  el.innerHTML = html;
+  if(el){
+    let html = `<span class="skin-opt${!selectedSkinId ? ' active' : ''}" style="--opt-color:${PALETTE[0]};" onclick="pickSkin(null)">🎵 Todas<span class="count">(${songBank.length})</span></span>`;
+    skins.forEach(sk=>{
+      const count = getSongsForSkin(sk.id).length;
+      html += `<span class="skin-opt${selectedSkinId===sk.id ? ' active' : ''}" style="--opt-color:${sk.color};" onclick="pickSkin('${sk.id}')">${escapeHtml(sk.name)}<span class="count">(${count})</span></span>`;
+    });
+    el.innerHTML = html;
+  }
+  if(sel){
+    let optHtml = `<option value="">🎵 Todas (${songBank.length})</option>`;
+    skins.forEach(sk=>{
+      const count = getSongsForSkin(sk.id).length;
+      optHtml += `<option value="${sk.id}">${escapeHtml(sk.name)} (${count})</option>`;
+    });
+    sel.innerHTML = optHtml;
+    sel.value = selectedSkinId || '';
+    const activeColor = selectedSkinId ? ((skins.find(s=>s.id===selectedSkinId)||{}).color || PALETTE[0]) : PALETTE[0];
+    sel.style.setProperty('--c1', activeColor);
+    sel.style.borderColor = activeColor;
+  }
 }
 function pickSkin(skinId){
   selectedSkinId = skinId;
